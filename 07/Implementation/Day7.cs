@@ -1,13 +1,25 @@
-﻿using System.Security.Cryptography;
+﻿using System.Globalization;
+using System.Security.Cryptography;
 
 namespace Implementation;
 
 public static class Day7
 {
+
+    public static long Part2(string input)
+    {
+        Hand[] hands = [.. input.Split("\n").Select(s => s.Replace('J', '*')).Select(Hand.Parse)];
+        return CalculateWinnings(hands);
+    }
+
     public static long Part1(string input)
     {
         Hand[] hands = [.. input.Split("\n").Select(Hand.Parse)];
-        // TODO: Sort Hands
+        return CalculateWinnings(hands);
+    }
+
+    public static long CalculateWinnings(Hand[] hands)
+    {
         Hand[] sorted = [..
             hands.OrderBy(hand => hand.HandType)
                  .ThenBy(hand => hand.Cards[0].Rank)
@@ -25,10 +37,6 @@ public static class Day7
         return result;
     }
 
-    private static int HandStrength(Hand hand)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 public enum HandType
@@ -55,6 +63,25 @@ public record Hand(Card[] Cards, long Bid)
 
     public static HandType CalculateHandType(Card[] cards)
     {
+        var remaining = cards.Where(c => c.Rank > 1);
+        int count = remaining.Count();
+        if (count == 5) { return CalculateSingleHandType(cards); }
+        // Get permutations of wild cards
+        int wildCards = 5 - count;
+        // [2, 2], [3, 3], [4, 4]
+        IEnumerable<Card[]> substitutions = Card.All.Select(c => Enumerable.Repeat(c, wildCards).ToArray());
+        HandType best = HandType.HighCard;
+        foreach (Card[] substitution in substitutions)
+        {
+            Card[] p = [ .. remaining, .. substitution];
+            HandType current = CalculateSingleHandType(p);
+            best = (HandType) Math.Max((int)best, (int)current);
+        }
+        return best;
+    }
+
+    private static HandType CalculateSingleHandType(Card[] cards)
+    {
         int[] counts = [..
             cards
                 .GroupBy(c => c)
@@ -71,14 +98,37 @@ public record Hand(Card[] Cards, long Bid)
             _ => HandType.HighCard,
         };
     }
+
+    public override string ToString()
+    {
+        return $"Hand: {string.Join("", Cards.Select(c => c.Symbol))}";
+    }
 }
 
-public record Card(int Rank)
+public record Card(int Rank, char Symbol)
 {
+    public static Card[] All { get; } = new Card[]
+    {
+        new Card(2, '2'),
+        new Card(3, '3'),
+        new Card(4, '4'),
+        new Card(5, '5'),
+        new Card(6, '6'),
+        new Card(7, '7'),
+        new Card(8, '8'),
+        new Card(9, '9'),
+        new Card(10, 'T'),
+        // new Card(11, 'J'),
+        new Card(12, 'Q'),
+        new Card(13, 'K'),
+        new Card(14, 'A'),
+    };
+
     public static Card Parse(char ch)
     {
         int rank = ch switch
         {
+            '*' => 1,
             '2' => 2,
             '3' => 3,
             '4' => 4,
@@ -94,6 +144,6 @@ public record Card(int Rank)
             'A' => 14,
             _ => throw new InvalidOperationException($"Invalid card rank: '{ch}'")
         };
-        return new Card(rank);
+        return new Card(rank, ch);
     }
 }

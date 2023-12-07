@@ -14,6 +14,7 @@ public class Day7Tests
     KTJJT 220
     QQQJA 483
     """;
+    // KT**T 
 
     
 
@@ -25,10 +26,24 @@ public class Day7Tests
     }
 
     [Fact]
+    public void test_sample_input_part2()
+    {
+        long expected_result = 5905;
+        Day7.Part2(SampleInput).ShouldBe(expected_result);
+    }
+
+    [Fact]
     public void test_input_part1()
     {
         long expected_result = 253910319L;
         Day7.Part1(Input).ShouldBe(expected_result);
+    }
+
+    [Fact]
+    public void test_input_part2()
+    {
+        long expected_result = 254083736L;
+        Day7.Part2(Input).ShouldBe(expected_result);
     }
 
     [Fact]
@@ -43,11 +58,11 @@ public class Day7Tests
 
         // Assert
         hand.Cards.ShouldBe(new Card[] { 
-            new Card(3),  
-            new Card(2),  
-            new Card(10),  
-            new Card(3),  
-            new Card(13),  
+            new Card(3, '3'),  
+            new Card(2, '2'),  
+            new Card(10, 'T'),  
+            new Card(3, '3'),  
+            new Card(13, 'K'),  
             });
 
         hand.Bid.ShouldBe(765);
