@@ -20,9 +20,21 @@ public class Day9Tests
     }
 
     [Fact]
+    public void test_sample_input_part2()
+    {
+        Day9.Part2(SampleInput).ShouldBe(2);
+    }
+
+    [Fact]
     public void test_input_part1()
     {
         Day9.Part1(Input).ShouldBe(2008960228L);
+    }
+
+    [Fact]
+    public void test_input_part2()
+    {
+        Day9.Part2(Input).ShouldBe(1097L);
     }
 
     [Theory]
