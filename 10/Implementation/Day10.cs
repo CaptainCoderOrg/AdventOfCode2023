@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text;
 
 public class Day10
 {
@@ -8,9 +9,38 @@ public class Day10
         return maze.Walk().Values.Max();
     }
 
+    public static long Part2(string input)
+    {
+        input = input.PadGrid('.');
+        Maze maze = Maze.Parse(input);
+        char[][] toFill = [.. maze.ExpandMap().Select(row => row.ToCharArray())];
+        FloodFill(toFill, 0, 0);
+        long count = 0;
+        foreach(char[] row in toFill)
+        {
+            foreach (char ch in row)
+            {
+                if (ch == '.') { count++; }
+            }
+        }
+        
+        return count;
+    }
 
+    public static void FloodFill(char[][] maze, int row, int col)
+    {
+        if (row < 0 || row >= maze.Length || col < 0 || col >= maze[row].Length) { return; }
+        // If this is not a flood fillable space, exit
+        if (!". ".Contains(maze[row][col])) { return; }
+        maze[row][col] = 'O';
+        FloodFill(maze, row + 1, col);
+        FloodFill(maze, row - 1, col);
+        FloodFill(maze, row, col + 1);
+        FloodFill(maze, row, col - 1);
+    }
 
 }
+
 
 // public record Position(int Row, int Col);
 // | is a vertical pipe connecting north and south.
@@ -33,14 +63,14 @@ public enum Pipe
     TopLeft = 'F',
 }
 
-public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
+public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start, int Rows, int Columns, string[] RawMaze)
 {
 
     public static Maze Parse(string input)
     {
         HashSet<Pipe> valid = new HashSet<Pipe> {
-            Pipe.Vertical, 
-            Pipe.Horizontal, 
+            Pipe.Vertical,
+            Pipe.Horizontal,
             Pipe.BottomLeft,
             Pipe.BottomRight,
             Pipe.TopRight,
@@ -49,7 +79,7 @@ public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
         Dictionary<Position, Pipe> pipes = new Dictionary<Position, Pipe>();
         Position start = default;
         string[] maze = input.Split("\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        
+
         for (int row = 0; row < maze.Length; row++)
         {
             for (int col = 0; col < maze[row].Length; col++)
@@ -57,12 +87,12 @@ public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
                 if (maze[row][col] == 'S') { start = (row, col); }
                 Pipe pipe = (Pipe)maze[row][col];
                 if (!valid.Contains(pipe)) { continue; }
-                pipes[new Position(row, col)] =  pipe;
+                pipes[new Position(row, col)] = pipe;
             }
         }
-        
+
         pipes[start] = DetermineStartShape(maze, start);
-        return new Maze(new ReadOnlyDictionary<Position, Pipe>(pipes), start);
+        return new Maze(new ReadOnlyDictionary<Position, Pipe>(pipes), start, maze.Length, maze[0].Length, maze);
     }
 
     // 1  procedure BFS(G, root) is
@@ -102,16 +132,64 @@ public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
         return distances;
     }
 
+    public IEnumerable<string> ExpandMap()
+    {
+        HashSet<Position> loop = [.. Walk().Keys];
+        // string[] maze = new string[Rows];
+        StringBuilder builder = new StringBuilder();
+        char[][] maze = new char[Rows * 2][];
+        for (int row = 0; row < Rows; row++)
+        {
+            builder.Clear();
+            for (int col = 0; col < Columns; col++)
+            {
+                // builder.Append($"{RawMaze[row][col]} ");
+                builder.Append($". ");
+            }
+            maze[row * 2] = builder.ToString().ToCharArray();
+            maze[row * 2 + 1] = "".PadLeft(Columns * 2 - 1, ' ').ToCharArray();
+        }
+
+        foreach (Position pipe in loop)
+        {
+            char ch = RawMaze[pipe.Row][pipe.Col];
+            maze[pipe.Row * 2][pipe.Col * 2] = ch;
+            if (ch.PipesUp())
+            {
+                maze[pipe.Row * 2 - 1][pipe.Col * 2] = '*';
+            }
+            if (ch.PipesDown())
+            {
+                maze[pipe.Row * 2 + 1][pipe.Col * 2] = '*';
+            }
+            if (ch.PipesLeft())
+            {
+                // Warning: Does not account for edge of maze
+                maze[pipe.Row * 2][pipe.Col * 2 - 1] = '*';
+            }
+            if (ch.PipesRight())
+            {
+                // Warning: Does not account for edge of maze
+                maze[pipe.Row * 2][pipe.Col * 2 + 1] = '*';
+            }
+        }
+
+        foreach (char[] row in maze)
+        {
+            yield return new string(row);
+        }
+    }
+
     public IEnumerable<Position> Neighbors(Position position)
     {
         IEnumerable<Position> possible = Pipes[position] switch
         {
-            Pipe.Vertical    => [position - (1, 0), position + (1, 0) ],
-            Pipe.Horizontal  => [position - (0, 1), position + (0, 1) ],
-            Pipe.BottomLeft  => [position - (1, 0), position + (0, 1)],
+            Pipe.Vertical => [position - (1, 0), position + (1, 0)],
+            Pipe.Horizontal => [position - (0, 1), position + (0, 1)],
+            Pipe.BottomLeft => [position - (1, 0), position + (0, 1)],
             Pipe.BottomRight => [position - (1, 0), position - (0, 1)],
-            Pipe.TopRight    => [position + (1, 0), position - (0, 1)],
-            Pipe.TopLeft     => [position + (1, 0), position + (0, 1)],
+            Pipe.TopRight => [position + (1, 0), position - (0, 1)],
+            Pipe.TopLeft => [position + (1, 0), position + (0, 1)],
             _ => throw new Exception("Could not determine neighbors")
         };
         return possible.Where(Pipes.ContainsKey);
@@ -120,12 +198,12 @@ public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
     public static Pipe DetermineStartShape(string[] maze, Position position)
     {
         // Note: There is a hack here that doesn't account for being at the edge
-        // of a map. This has been 
+        // of a map. This has been
         Position above = position - (1, 0);
         Position below = position + (1, 0);
         Position left = position - (0, 1);
         Position right = position + (0, 1);
-        
+
         char spaceAbove = maze[above.Row][above.Col];
         char spaceBelow = maze[below.Row][below.Col];
         char spaceLeft = maze[left.Row][left.Col];
@@ -136,7 +214,7 @@ public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
         {
             return Pipe.Vertical;
         }
-        
+
         // If Above pipes down and left Pipes right, we are BottomRight
         if (spaceAbove.PipesDown() && spaceLeft.PipesRight())
         {
@@ -157,7 +235,7 @@ public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
             return Pipe.TopLeft;
         }
 
-        // --> 7 
+        // --> 7
         //     ^
         //     |
         if (spaceBelow.PipesUp() && spaceLeft.PipesRight())
@@ -175,7 +253,7 @@ public record Maze(IReadOnlyDictionary<Position, Pipe> Pipes, Position Start)
 
     }
 
-    
+
 }
 
 public static class Extensions
@@ -188,4 +266,18 @@ public static class Extensions
     public static bool PipesDown(this char ch) => DownPipes.Contains(ch);
     public static bool PipesUp(this char ch) => UpPipes.Contains(ch);
     public static bool PipesLeft(this char ch) => LeftPipes.Contains(ch);
+
+    public static string PadGrid(this string input, char symbol)
+    {
+        StringBuilder sb = new ();
+        string[] rows = input.Split("\n");
+        int width = rows[0].Length + 2;
+        sb.AppendLine("".PadLeft(width, symbol));
+        foreach (string row in rows)
+        {
+            sb.AppendLine($"{symbol}{row}{symbol}");
+        }
+        sb.Append("".PadLeft(width, symbol));
+        return sb.ToString();
+    }
 }
