@@ -21,11 +21,23 @@ public class Day12Tests
     {
         Day12.Part1(SampleInput).ShouldBe(21);
     }
+    
+    [Fact]
+    public void test_sample_input_part2()
+    {
+        Day12.Part2(SampleInput).ShouldBe(525152);
+    }
 
     [Fact]
     public void test_puzzle_input_part1()
     {
         Day12.Part1(PuzzleInput).ShouldBe(7732L);
+    }
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day12.Part2(PuzzleInput).ShouldBe(4500070301581L);
     }
 
     [Theory]
@@ -44,5 +56,13 @@ public class Day12Tests
     public void test_process_springs_first()
     {
         Day12.ProcessSprings("???.### 1,1,3").ShouldBe(1);
+    }
+
+    [Theory]
+    [InlineData(".# 1", ".#?.#?.#?.#?.# 1,1,1,1,1")]
+    [InlineData("???.### 1,1,3", "???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3")]
+    public void test_expand_input(string input, string output)
+    {
+        Day12.ExpandInput(input).ShouldBe(output);
     }
 }

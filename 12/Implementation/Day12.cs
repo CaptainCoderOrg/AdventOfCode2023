@@ -1,13 +1,33 @@
 public class Day12
 {
 
+    private static Dictionary<(string springs, int broken, string remaining), long> _cache = new();
     public static long Part1(string input)
     {
-        
+
         return input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                     .Select(ProcessSprings)
                     .Sum();
     }
+
+    public static long Part2(string input)
+    {
+        return input.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(ExpandInput)
+                    .Select(ProcessSprings)
+                    .Sum();
+    }
+
+    public static string ExpandInput(string input)
+    {
+        string[] parts = input.Split(" ");
+        string left = Expand(parts[0], '?', 5);
+        string right = Expand(parts[1], ',', 5);
+        return $"{left} {right}";
+    }
+
+    public static string Expand(string toExpand, char toJoin, int copies) =>
+        string.Join(toJoin, Enumerable.Repeat(toExpand, copies));
 
     public static long ProcessSprings(string input)
     {
@@ -17,7 +37,18 @@ public class Day12
         return ProcessSprings(parts[0], int.Parse(nums[0]), rest);
     }
 
+
+
     public static long ProcessSprings(string springs, int broken, string remaining)
+    {
+        if (_cache.TryGetValue((springs, broken, remaining), out long result)) { return result; }
+
+        long solution = _ProcessSprings(springs, broken, remaining);
+        _cache[(springs, broken, remaining)] = solution;
+        return solution;
+    }
+
+    private static long _ProcessSprings(string springs, int broken, string remaining)
     {
         // ???.### 1,1,3
 
@@ -60,7 +91,7 @@ public class Day12
                 // Find the count for the next group of broken springs
                 string[] nums = remaining.Split(",", 2, StringSplitOptions.RemoveEmptyEntries);
                 string rest = nums.Length == 1 ? string.Empty : nums[1];
-                return ProcessSprings(springs[2..], int.Parse(nums[0]), rest); 
+                return ProcessSprings(springs[2..], int.Parse(nums[0]), rest);
             }
             else
             {
@@ -88,7 +119,7 @@ public class Day12
         // We found a broken spring
         if (nextSpring == '#')
         {
-            
+
 
             // If there are no more broken springs in this group
             // We are in an invalid configuration
@@ -111,7 +142,7 @@ public class Day12
             long validWithWorking = ProcessSprings('.' + springs[1..], broken, remaining);
             return validWithBroken + validWithWorking;
         }
-        
+
         throw new Exception($"Encountered invalid character {nextSpring}.");
     }
 
