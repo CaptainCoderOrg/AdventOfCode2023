@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -34,7 +35,10 @@ public partial class Day8
     public static long LCM(long a, long b) => Math.Abs(a * b) / GCD(a, b);
     public static long GCD(long a, long b) => b == 0 ? a : GCD(b, a % b);
 
-    public static List<StepEntry> GetStepsToEnds(string steps, string start,  Dictionary<string, (string Left, string Right)> mapping)
+    public static List<StepEntry> GetStepsToEnds(
+        string steps, 
+        string start,  
+        Dictionary<string, (string Left, string Right)> mapping)
     {
         long totalSteps = 0;
         List<StepEntry> PossibleEnds = new List<StepEntry>();
@@ -107,4 +111,12 @@ public partial class Day8
 
     public record StepEntry(string Start, string End, long Steps);
 
+}
+
+// Credit: steve7411
+internal static class MathUtils {
+    public static T LCM<T>(T a, T b) where T : INumber<T> => T.Abs(a * b) / GCD(a, b);
+
+    public static T GCD<T>(T a, T b) where T : INumber<T> =>
+        b == T.Zero ? a : GCD(b, a % b);
 }

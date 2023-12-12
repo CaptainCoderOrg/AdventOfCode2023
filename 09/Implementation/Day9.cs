@@ -35,10 +35,11 @@ public class Day9
 
         List<long> nextSequence = new ();
         // IEnumerable<(long first, long second)> zipped = 
-        foreach((long first, long second) in sequence.Zip(sequence[1..]))
-        {
-            nextSequence.Add(second - first);
-        }
+        nextSequence = sequence.Zip(sequence[1..]).Select(pair => pair.Second - pair.First).ToList();
+        // foreach((long first, long second) in sequence.Zip(sequence[1..]))
+        // {
+        //     nextSequence.Add(second - first);
+        // }
         
         Extrapolate(nextSequence);
         long deltaFirst = nextSequence[0];
