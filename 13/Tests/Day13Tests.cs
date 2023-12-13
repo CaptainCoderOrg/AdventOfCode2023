@@ -33,9 +33,21 @@ public class Day13Tests
     }
 
     [Fact]
+    public void test_sample_input_part2()
+    {
+        Day13.Part2(SampleInput).ShouldBe(400);
+    }
+
+    [Fact]
     public void test_puzzle_input_part1()
     {
         Day13.Part1(PuzzleInput).ShouldBe(33780L);
+    }
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day13.Part2(PuzzleInput).ShouldBe(23479L);
     }
 
     [Fact]

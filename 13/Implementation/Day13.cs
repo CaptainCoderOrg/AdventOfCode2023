@@ -16,13 +16,38 @@ public class Day13
         return rows*100 + cols;
     }
 
+    public static long Part2(string[] input)
+    {
+        IEnumerable<Grid> rawGrids = 
+                string.Join(Environment.NewLine, input)
+                .Split($"{Environment.NewLine}{Environment.NewLine}", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(g => new Grid(g));
+        
+        int rows = rawGrids.Select(g => g.FindSmudgedRow()).Sum();
+        int cols = rawGrids.Select(g => g.FindSmudgedCol()).Sum();
 
-
+        return rows*100 + cols;
+    }
 }
 
 public record Grid(string RawGrid)
 {
     public string[] Rows { get; } = RawGrid.Split(Environment.NewLine, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+    public static int HammingDistance(string first, string second) => 
+        first.Zip(second).Count(pair => pair.First != pair.Second);
+
+    public int FindSmudgedRow()
+    {
+        for (int row = 0; row < Rows.Length; row++)
+        {
+            (Grid top, Grid bottom) = MirrorRows(row);
+            if (HammingDistance(top.RawGrid, bottom.RawGrid) == 1) { return row + 1; }
+        }
+        return 0;
+    }
+
+    public int FindSmudgedCol() => Transpose().FindSmudgedRow();
 
     public int FindMirrorRow()
     {
