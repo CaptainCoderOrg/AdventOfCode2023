@@ -32,7 +32,7 @@ public class Day14Tests
         Day14.Part2(SampleInput).ShouldBe(64);
     }
 
-        [Fact]
+    [Fact]
     public void test_puzzle_input_part2()
     {
         Day14.Part2(PuzzleInput).ShouldBe(112452L);
