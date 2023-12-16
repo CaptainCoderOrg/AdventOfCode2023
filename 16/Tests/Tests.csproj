@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Implementaiton\Implementaiton.csproj" />
+    <ProjectReference Include="..\..\AoCHelpers\AoCHelpers.csproj" />
   </ItemGroup>
 
 </Project>
