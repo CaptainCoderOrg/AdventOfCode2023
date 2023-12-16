@@ -12,7 +12,14 @@ public class Day16
 
     public static long Part2(string input)
     {
-        return 0;
+        Grid grid = Grid.Parse(input);
+        (Position, Direction)[] possibleStarts = [
+        .. Enumerable.Range(0, grid.Columns).Select(col => ((0, col), Direction.South)),
+        .. Enumerable.Range(0, grid.Columns).Select(col => ((grid.Rows - 1, col), Direction.North)),
+        .. Enumerable.Range(0, grid.Rows).Select(row => ((row, 0), Direction.East)),
+        .. Enumerable.Range(0, grid.Rows).Select(row => ((row, grid.Columns - 1), Direction.West))];
+
+        return possibleStarts.Select(grid.Energized).Select(h => h.Count).Max();
     }
 }
 

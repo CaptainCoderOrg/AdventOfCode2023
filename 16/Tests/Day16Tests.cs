@@ -28,6 +28,18 @@ public class Day16Tests
     }
 
     [Fact]
+    public void test_sample_input_part2()
+    {
+        Day16.Part2(SampleInput).ShouldBe(51);
+    }
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day16.Part2(PuzzleInput).ShouldBe(8023L);
+    }
+
+    [Fact]
     public void test_puzzle_input_part1()
     {
         Day16.Part1(PuzzleInput).ShouldBe(7632L);
