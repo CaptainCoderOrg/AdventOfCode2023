@@ -23,6 +23,15 @@ public class Day17Tests
     4322674655533
     """.ReplaceLineEndings().Trim();
 
+    public static readonly string SampleInput2 =
+    """
+    111111111111
+    999999999991
+    999999999991
+    999999999991
+    999999999991
+    """.ReplaceLineEndings().Trim();
+
     public static readonly string PuzzleInput = File.ReadAllText("input.txt").ReplaceLineEndings().Trim();
 
     [Fact]
@@ -32,9 +41,22 @@ public class Day17Tests
     }
 
     [Fact]
+    public void test_sample_input_part2()
+    {
+        Day17.Part2(SampleInput).ShouldBe(94);
+        Day17.Part2(SampleInput2).ShouldBe(71);        
+    }
+
+    [Fact]
     public void test_puzzle_input_part1()
     {
         Day17.Part1(PuzzleInput).ShouldBe(1128L);
+    }
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day17.Part2(PuzzleInput).ShouldBe(1268L);
     }
 
     [Fact]

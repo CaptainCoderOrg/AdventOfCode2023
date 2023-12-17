@@ -12,7 +12,12 @@ public class Day17
 
     public static long Part2(string input)
     {
-        return 0;
+        Grid grid = Grid.Parse(input);
+        Position end = (grid.Rows - 1, grid.Columns - 1);
+        return grid.Traverse(end,
+            current => current.Position == end && current.StepsInDirection >= 4,
+            node => grid.Neighbors(node, 4, 10)
+        );
     }
 }
 
@@ -58,24 +63,25 @@ public record Grid(int Rows, int Columns)
     // 18
     // 19      return dist[], prev[]
 
+    public long Traverse(Position end) => Traverse(end, current => current.Position == end, Neighbors);
     
-    public long Traverse(Position end)
+    public long Traverse(Position end, Predicate<Node> isEnd, Func<Node, IEnumerable<Node>> neighbors)
     {
         Position start = (0, 0);
         // (Position current, Direction direction, int stepsInDirection, int heatLevel)
         PriorityQueue<Node, int> queue = new();
         queue.Enqueue(new Node(start, Direction.East, 0), 0);
+        queue.Enqueue(new Node(start, Direction.South, 0), 0);
         // queue.Enqueue(new Node(start, Direction.South, 1), this[1, 0]);
         HashSet<Node> visited = new ();
         int loops = 0;
-        while (queue.TryDequeue(out Node? current, out int heatLevel) && loops++ < 1_000_000)
+        while (queue.TryDequeue(out Node? current, out int heatLevel) && loops++ < 100_000_000)
         {
-            if (current.Position == end) { return heatLevel; }
+            if (isEnd(current)) { return heatLevel; }
             if (visited.Contains(current)) { continue; }
             visited.Add(current);
 
-            IEnumerable<Node> neighbors = Neighbors(current);
-            foreach (Node neighbor in neighbors)
+            foreach (Node neighbor in neighbors(current))
             {
                 if (!IsInGrid(neighbor.Position)) { continue; }
                 queue.Enqueue(neighbor, heatLevel + this[neighbor.Position]);
@@ -88,18 +94,25 @@ public record Grid(int Rows, int Columns)
 
     public bool IsInGrid(Position position) => position.Row >= 0 && position.Row < Rows && position.Col >= 0 && position.Col < Columns;
 
-    public IEnumerable<Node> Neighbors(Node current) {
+    public IEnumerable<Node> Neighbors(Node current) => Neighbors(current, 0, 3);
+    public IEnumerable<Node> NeighborsPt2(Node current) => Neighbors(current, 4, 10);
 
-        // If we have not taken 3 steps, we can continue in the same direction.
-        if (current.StepsInDirection < 3)
+    public IEnumerable<Node> Neighbors(Node current, int minDistance, int maxStraightDistance) {
+
+        // If we have not taken too many steps, we can continue in the same direction.
+        if (current.StepsInDirection < maxStraightDistance)
         {
             yield return new Node(current.Position.Step(current.Movement), current.Movement, current.StepsInDirection + 1);
         }
 
-        Direction rotated = current.Movement.Rotate();
-        yield return new Node(current.Position.Step(rotated), rotated, 1);
-        Direction rotatedCounterClockwise = current.Movement.RotateCounterClockwise();
-        yield return new Node(current.Position.Step(rotatedCounterClockwise), rotatedCounterClockwise, 1);        
+        // We cannot rotate until we have reached the minDistance
+        if (current.StepsInDirection >= minDistance)
+        {
+            Direction rotated = current.Movement.Rotate();
+            yield return new Node(current.Position.Step(rotated), rotated, 1);
+            Direction rotatedCounterClockwise = current.Movement.RotateCounterClockwise();
+            yield return new Node(current.Position.Step(rotatedCounterClockwise), rotatedCounterClockwise, 1);        
+        }
     }
 }
 
