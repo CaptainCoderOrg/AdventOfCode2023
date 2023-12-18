@@ -1,5 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
-
 public class Day15
 {
     public static long Part1(string input)

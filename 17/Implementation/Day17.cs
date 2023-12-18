@@ -86,8 +86,7 @@ public record Grid(int Rows, int Columns)
                 if (!IsInGrid(neighbor.Position)) { continue; }
                 queue.Enqueue(neighbor, heatLevel + this[neighbor.Position]);
             }
-        }
-        
+        }        
 
         throw new Exception($"No valid solution? Looped {loops}");
     }
