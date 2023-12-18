@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Threading.Tasks.Dataflow;
+using AoCHelpers;
 
 string Input =
     """
@@ -20,8 +21,22 @@ string Input =
     U 2 (#7a21e3)
     """.ReplaceLineEndings().Trim();
 
-Input = File.ReadAllText("input.txt").ReplaceLineEndings().Trim();
-
-Outline grid = Outline.Parse(Input);
+// Input = File.ReadAllText("input.txt").ReplaceLineEndings().Trim();
+// DateTime start, end;
+// Console.Write("Building Grid: ");
+// start = DateTime.Now;
+// Outline grid = Outline.ParseTrue(Input);
+// end = DateTime.Now;
+// Console.WriteLine($"Finished {(end - start).Milliseconds} Milliseconds");
+// Console.Write("Flood filling: ");
+// start = DateTime.Now;
+// HashSet<Position> positions = grid.FloodFill((1, 1));
+// end = DateTime.Now;
+// Console.WriteLine($"Finished {(end - start).Milliseconds} Milliseconds");
+// Console.WriteLine("Counting: ");
+// start = DateTime.Now;
+// Console.WriteLine(positions.Count);
+// end = DateTime.Now;
+// Console.WriteLine($"Finished {(end - start).Milliseconds} Milliseconds");
 // Console.WriteLine(string.Join(", ", grid.Holes));
-grid.FloodFill((1, 1)).PrettyPrintPositionSet();
+// grid.FloodFill((1, 1)).PrettyPrintPositionSet();

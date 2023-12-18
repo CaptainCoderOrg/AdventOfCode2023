@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using AoCHelpers;
 
@@ -13,9 +14,26 @@ public partial class Day18
 
     public static long Part2(string input)
     {
-        return 0;
+        Polygon outline = Polygon.Parse(input);
+        
+        // Pick's theorem ( https://en.wikipedia.org/wiki/Pick%27s_theorem )
+        // Area = Interior + Boundary/2 - 1 .
+        long area = Shoelace(outline.Positions);
+        long totalArea = area + outline.Perimeter / 2 + 1;
+        return totalArea;
     }
 
+    public static long Shoelace(List<Position> vertices)
+    {
+        long sum = 0L;
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            Position p1 = vertices[i];
+            Position p2 = vertices[(i + 1) % vertices.Count];
+            sum += ((long)p2.Col + p1.Col) * ((long)p2.Row - p1.Row);
+        }
+        return sum / 2;
+    }
 
 
 }
@@ -24,6 +42,25 @@ public enum GridState
 {
     Hole,
     NoHole,
+}
+
+public record Polygon(List<Position> Positions, long Perimeter)
+{
+    public static Polygon Parse(string input)
+    {
+        List<Position> outline = new();
+        Position cursor = (0, 0);
+        long perimeter = 0;
+        // outline.Add(cursor);
+        foreach (string line in input.Split(Environment.NewLine))
+        {
+            Instruction instruction = Instruction.ParseTrueInstruction(line);
+            perimeter += instruction.Steps;
+            cursor = cursor.StepN(instruction.Direction, instruction.Steps);
+            outline.Add(cursor);
+        }
+        return new Polygon(outline, perimeter);
+    }
 }
 
 public record Outline(Position TopLeft, Position BottomRight, HashSet<Position> Holes)
@@ -75,7 +112,7 @@ public record Outline(Position TopLeft, Position BottomRight, HashSet<Position> 
         queue.Enqueue(start);
         holes.Add(start);
         int sanity_stopper = 10_000_000;
-        int loops = 0;
+        long loops = 0;
         while (queue.TryDequeue(out Position next))
         {
             if  (loops++ > sanity_stopper)
@@ -87,6 +124,10 @@ public record Outline(Position TopLeft, Position BottomRight, HashSet<Position> 
             // 11                  label w as explored
             // 12                  w.parent := v
             // 13                  Q.enqueue(w)
+            if (++loops % 1_000_000_000 == 0)
+            {
+                Console.WriteLine($"Found {loops} positions");
+            }
             foreach (Direction dir in (Direction[])[Direction.Up, Direction.Down, Direction.Left, Direction.Right])
             {
                 Position step = next.Step(dir);
@@ -95,7 +136,7 @@ public record Outline(Position TopLeft, Position BottomRight, HashSet<Position> 
                 queue.Enqueue(step);                
             }
         }
-        
+        Console.WriteLine($"Found {loops} positions");
         return holes;
     }
 }
@@ -118,6 +159,18 @@ public static class DirectionExtensions
             Direction.Down => position + (1, 0),
             Direction.Left => position + (0, -1),
             Direction.Right => position + (0, 1),
+            _ => throw new Exception($"Unexpected direction {direction}"),
+        };
+    }
+
+    public static Position StepN(this Position position, Direction direction, int steps)
+    {
+        return direction switch
+        {
+            Direction.Up => position + (-steps, 0),
+            Direction.Down => position + (steps, 0),
+            Direction.Left => position + (0, -steps),
+            Direction.Right => position + (0, steps),
             _ => throw new Exception($"Unexpected direction {direction}"),
         };
     }
@@ -151,6 +204,22 @@ public partial record Instruction(Direction Direction, int Steps, string Hash)
         Direction direction = (Direction)groups["dir"].Value[0];
         int steps = int.Parse(groups["steps"].Value);
         string hash = groups["hash"].Value;
+        return new Instruction(direction, steps, hash);
+    }
+
+    public static Instruction ParseTrueInstruction(string input)
+    {
+        var groups = InstructionRegex().Match(input).Groups;
+        string hash = groups["hash"].Value;
+        int steps = Convert.ToInt32(hash[0..5], 16);
+        Direction direction = hash[5] switch
+        {
+            '0' => Direction.Right,
+            '1' => Direction.Down,
+            '2' => Direction.Left,
+            '3' => Direction.Up,
+            _ => throw new Exception("This problem is dumb. I really wanted to use hex color transformations"),
+        };
         return new Instruction(direction, steps, hash);
     }
 

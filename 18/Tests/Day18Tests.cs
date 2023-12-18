@@ -32,9 +32,21 @@ public class Day18Tests
     }
 
     [Fact]
+    public void test_sample_input_part2()
+    {
+        Day18.Part2(SampleInput).ShouldBe(952408144115L);
+    }
+
+    [Fact]
     public void test_puzzle_input_part1()
     {
         Day18.Part1(PuzzleInput).ShouldBe(108909L);
+    }
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day18.Part2(PuzzleInput).ShouldBe(133125706867777L);
     }
 
 
@@ -68,5 +80,15 @@ public class Day18Tests
     public void test_parse_instruction(string input, Direction expectedDir, int expectedStep, string expectedHash)
     {
         Instruction.Parse(input).ShouldBe(new Instruction(expectedDir, expectedStep, expectedHash));
+    }
+
+    [Theory]
+    [InlineData("U 2 (#70c710)", Direction.Right, 461937, "70c710")]
+    [InlineData("R 13 (#0dc571)", Direction.Down, 56407, "0dc571")]
+    [InlineData("L 1 (#8ceee2)", Direction.Left, 577262, "8ceee2")]
+    [InlineData("D 5 (#a77fa3)", Direction.Up, 686074, "a77fa3")]
+    public void test_parse_true_instruction(string input, Direction expectedDir, int expectedStep, string expectedHash)
+    {
+        Instruction.ParseTrueInstruction(input).ShouldBe(new Instruction(expectedDir, expectedStep, expectedHash));
     }
 }
