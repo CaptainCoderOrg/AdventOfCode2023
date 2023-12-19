@@ -4,12 +4,29 @@ public class Day19 {
 
     public static long Part1(string input)
     {
-        return 0;
+        (Dictionary<string, Workflow> workflows, IEnumerable<MachinePart> parts) = Parse(input);
+        return parts.Where(part => Workflow.Accept(part, workflows)).Select(part => part.Value).Sum();
     }
 
     public static long Part2(string input)
     {
         return 0;
+    }
+
+    public static (Dictionary<string, Workflow> Workflows, IEnumerable<MachinePart> Parts) Parse(string input)
+    {
+        Dictionary<string, Workflow> workflows = new();
+        int ix = 0;
+        string[] rows = input.Split(Environment.NewLine, StringSplitOptions.TrimEntries);
+        foreach (string row in rows)
+        {
+            ix++;
+            if (row == string.Empty) { break; }
+            Workflow wf = Workflow.Parse(row);
+            workflows[wf.Label] = wf;
+        }
+
+        return (workflows, rows[ix..].Select(MachinePart.Parse));
     }
 
 }
@@ -36,7 +53,21 @@ public partial record Workflow(string Label, IEnumerable<ICondition> Conditions)
         var groups = WorkFlowRegex().Match(input).Groups;
         IEnumerable<ICondition> conditions = groups["conditions"].Value.Split(",").Select(ICondition.Parse);
         return new Workflow(groups["label"].Value, conditions);
+    }
 
+    public static bool Accept(MachinePart part, Dictionary<string, Workflow> workflows)
+    {
+        string label = "in";
+        HashSet<string> seen = new ();
+        while(!seen.Contains(label))
+        {
+            seen.Add(label);
+            Workflow flow = workflows[label];
+            label = flow.Conditions.Where(condition => condition.Check(part)).First().Label;
+            if (label == "R") { return false; }
+            if (label == "A") { return true; }
+        }
+        throw new Exception($"Infinite loop detected for part: {part}");
     }
 
     [GeneratedRegex(@"(?<label>\w+){(?<conditions>[^}]+)}")]
@@ -90,6 +121,7 @@ public partial record IfCondition(Rating Rating, Comparator Comparator, int Valu
 
 public partial record MachinePart(int X, int M, int A, int S)
 {
+    public long Value { get; } = X + M + A + S;
     public int this[Rating ix] => ix switch
     {
         Rating.X => X,

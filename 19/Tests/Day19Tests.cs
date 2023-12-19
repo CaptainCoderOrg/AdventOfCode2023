@@ -27,10 +27,18 @@ public class Day19Tests
     {x=2127,m=1623,a=2188,s=1013}
     """.ReplaceLineEndings().Trim();
 
+    public static readonly string PuzzleInput = File.ReadAllText("input.txt").ReplaceLineEndings().Trim();
+
     [Fact]
     public void test_sample_input_part1()
     {
         Day19.Part1(SampleInput).ShouldBe(19114);
+    }
+
+    [Fact]
+    public void test_puzzle_input_part1()
+    {
+        Day19.Part1(PuzzleInput).ShouldBe(368964L);
     }
 
     [Fact]
