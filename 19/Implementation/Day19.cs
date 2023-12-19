@@ -15,18 +15,13 @@ public class Day19 {
 
     public static (Dictionary<string, Workflow> Workflows, IEnumerable<MachinePart> Parts) Parse(string input)
     {
-        Dictionary<string, Workflow> workflows = new();
-        int ix = 0;
         string[] rows = input.Split(Environment.NewLine, StringSplitOptions.TrimEntries);
-        foreach (string row in rows)
-        {
-            ix++;
-            if (row == string.Empty) { break; }
-            Workflow wf = Workflow.Parse(row);
-            workflows[wf.Label] = wf;
-        }
-
-        return (workflows, rows[ix..].Select(MachinePart.Parse));
+        Dictionary<string, Workflow> workflows = 
+            rows.TakeWhile(row => row != string.Empty)
+                .Select(Workflow.Parse)
+                .ToDictionary(workflow => workflow.Label);
+        IEnumerable<MachinePart> parts = rows.SkipWhile(row => row != string.Empty).Skip(1).Select(MachinePart.Parse);
+        return (workflows, parts);
     }
 
 }
