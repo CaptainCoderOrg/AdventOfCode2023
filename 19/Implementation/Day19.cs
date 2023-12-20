@@ -8,9 +8,35 @@ public class Day19 {
         return parts.Where(part => Workflow.Accept(part, workflows)).Select(part => part.Value).Sum();
     }
 
-    public static long Part2(string input)
+    public static long Part2(string input, int min = 1, int max = 4000)
     {
-        return 0;
+        (Dictionary<string, Workflow> workflows, IEnumerable<MachinePart> _) = Parse(input);
+        PartRange all = new PartRange(
+            X: new RatingRange(min, max),
+            M: new RatingRange(min, max),
+            A: new RatingRange(min, max),
+            S: new RatingRange(min, max)
+        );
+        Queue<(PartRange range, string label)> queue = new ();
+        queue.Enqueue((all, "in"));
+        HashSet<PartRange> accepted = new ();
+        while (queue.TryDequeue(out var next))
+        {
+            (PartRange range, string label) = next;
+            if (label == "A")
+            {
+                accepted.Add(range);
+                continue;
+            }
+            Workflow workflow = workflows[label];
+            var splits = range.Split(workflow).ToArray();
+            foreach ((PartRange, string label) split in splits)
+            {
+                if (split.label == "R") { continue; }
+                queue.Enqueue(split);
+            }
+        }
+        return accepted.Sum(r => r.Count);
     }
 
     public static (Dictionary<string, Workflow> Workflows, IEnumerable<MachinePart> Parts) Parse(string input)
@@ -24,6 +50,45 @@ public class Day19 {
         return (workflows, parts);
     }
 
+}
+
+public record RatingRange(long Low, long High)
+{
+    public static RatingRange Empty { get; } = new RatingRange(long.MaxValue, long.MinValue);
+    public long Count => Math.Max(0, High - Low + 1);
+}
+public record PartRange(RatingRange X, RatingRange M, RatingRange A, RatingRange S)
+{
+    public static PartRange Empty { get; } = new PartRange(RatingRange.Empty, RatingRange.Empty, RatingRange.Empty, RatingRange.Empty);
+    public RatingRange this[Rating ix] => ix switch
+    {
+        Rating.X => X,
+        Rating.M => M,
+        Rating.A => A,
+        Rating.S => S,
+        _ => throw new IndexOutOfRangeException($"Invalid rating {ix}"),
+    };
+
+    public long Count => X.Count * M.Count * A.Count * S.Count;
+
+    public PartRange Set(Rating rating, RatingRange range) => rating switch
+    {
+        Rating.X => this with { X = range },
+        Rating.M => this with { M = range },
+        Rating.A => this with { A = range },
+        Rating.S => this with { S = range },
+        _ => throw new IndexOutOfRangeException($"Invalid rating {rating}"),
+    };
+
+    public IEnumerable<(PartRange, string NextWorkflowLabel)> Split(Workflow flow)
+    {
+        PartRange currentRange = this;
+        foreach (ICondition condition in flow.Conditions)
+        {
+            (PartRange included, currentRange) = condition.Split(currentRange);
+            yield return (included, condition.Label);
+        }
+    }
 }
 
 public enum Rating : ushort
@@ -73,6 +138,7 @@ public interface ICondition
 {
     public string Label { get; }
     public bool Check(MachinePart machinePart);
+    public (PartRange Included, PartRange Excluded) Split(PartRange partRange);
 
     public static ICondition Parse(string input)
     {
@@ -85,6 +151,7 @@ public interface ICondition
 public record ElseCondition(string Label) : ICondition
 {
     public bool Check(MachinePart machinePart) => true;
+    public (PartRange Included, PartRange Excluded) Split(PartRange partRange) => (partRange, PartRange.Empty);
 }
 
 public partial record IfCondition(Rating Rating, Comparator Comparator, int Value, string Label) : ICondition
@@ -97,6 +164,28 @@ public partial record IfCondition(Rating Rating, Comparator Comparator, int Valu
             _ => throw new Exception($"Invalid comparator {Comparator}")
         };
     }
+
+    public (PartRange Included, PartRange Excluded) Split(PartRange partRange)
+    {
+        RatingRange range = partRange[Rating];
+        if (Comparator is Comparator.LT)
+        {   
+            long newUpper = Math.Min(Value - 1, range.High);
+            PartRange included = partRange.Set(Rating, new RatingRange(range.Low, newUpper));
+            long newLower = Math.Max(range.Low, Value);
+            PartRange excluded = partRange.Set(Rating, new RatingRange(newLower, range.High));
+            return (included, excluded);
+        }
+        else // is GT
+        {
+            long newUpper = Math.Min(Value, range.High);
+            PartRange excluded = partRange.Set(Rating, new RatingRange(range.Low, newUpper));
+            long newLower = Math.Max(range.Low, Value + 1);
+            PartRange included = partRange.Set(Rating, new RatingRange(newLower, range.High));
+            return (included, excluded);
+        }
+    }
+
 
     public static IfCondition Parse(string input)
     {

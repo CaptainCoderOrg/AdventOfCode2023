@@ -34,6 +34,40 @@ public class Day19Tests
     {
         Day19.Part1(SampleInput).ShouldBe(19114);
     }
+    [Fact]
+    public void test_sample_input_part2()
+    {
+        
+        Day19.Part2(SampleInput).ShouldBe(167409079868000L);
+    }
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        
+        Day19.Part2(PuzzleInput).ShouldBe(127675188176682L);
+    }
+    
+    [Fact]
+    public void test_crafted_input_part2()
+    {
+        string CraftedInput =
+        """
+        in{x<2:ppx,m<2:ppm,a<2:ppa,s<2:pps,A}
+        ppx{R}
+        ppm{R}
+        ppa{R}
+        pps{R}
+        
+
+        {x=787,m=2655,a=1222,s=2876}
+        {x=1679,m=44,a=2067,s=496}
+        {x=2036,m=264,a=79,s=2244}
+        {x=2461,m=1339,a=466,s=291}
+        {x=2127,m=1623,a=2188,s=1013}
+        """.ReplaceLineEndings().Trim();
+        Day19.Part2(CraftedInput, 1, 4).ShouldBe(81L);
+    }
 
     [Fact]
     public void test_puzzle_input_part1()
