@@ -1,3 +1,4 @@
+using CaptainCoder.MathUtils;
 public class Day20
 {
     public static long Part1(string input)
@@ -11,7 +12,24 @@ public class Day20
 
     public static long Part2(string input)
     {
-        return 0;
+        ModuleNetwork network = ModuleNetwork.Parse(input);
+        Dictionary<string, long> CycleLength = new();
+        string[] targets = [ "db", "lm", "sg", "dh"];
+        int pushes = 0;
+        while (CycleLength.Count < 4 && pushes < 5_000)
+        {
+            network.PushButton();
+            pushes++;
+            foreach (string target in targets)
+            {
+                Module m = network.Nodes[target];
+                if (m.HasSentHigh && !CycleLength.ContainsKey(target))
+                {
+                    CycleLength[target] = pushes;
+                }
+            }
+        }
+        return MathUtils.LCM(CycleLength.Values);
     }
 }
 
@@ -58,18 +76,6 @@ public class ModuleNetwork
 
     public (long Low, long High) PushButton()
     {
-        // button -low-> broadcaster | button -low-> broadcaster
-        // broadcaster -low-> a | broadcaster -low-> a
-        // broadcaster -low-> b | broadcaster -low-> b
-        // broadcaster -low-> c | broadcaster -low-> c
-        // a -high-> b | a -high-> b
-        // b -high-> c | b -high-> c
-        // c -high-> inv | c -high-> inv
-        // inv -low-> a | inv -low-> a
-        // a -low-> b | a -low-> b
-        // b -low-> c | b -low-> c
-        // c -low-> inv | c -low-> inv
-        // inv -high-> a | inv -low-> a
         long low = 1;
         long high = 0;
         Queue<Pulse> pulses = new Queue<Pulse>();
@@ -107,6 +113,7 @@ public record Module(ModuleType MType, string Name, ModuleNetwork Network)
 {
 
     public bool IsOn { get; private set; } = false;
+    public bool HasSentHigh { get; private set; } = false;
     private Dictionary<string, bool> _lastInput = new ();
     public IEnumerable<Pulse> HandlePulse(Pulse incoming)
     {
@@ -125,6 +132,7 @@ public record Module(ModuleType MType, string Name, ModuleNetwork Network)
                 bool allHigh = Network.IncomingEdges[Name]
                                       .Select(moduleName => _lastInput.GetValueOrDefault(moduleName, false))
                                       .All(x => x);
+                HasSentHigh |= !allHigh;
                 return Network.OutEdges[Name].Select(destination => new Pulse(!allHigh, Name, destination));
             },
             ModuleType.Sink => (_) => [],

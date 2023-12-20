@@ -49,6 +49,12 @@ public class Day20Tests
     }
 
     [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day20.Part2(PuzzleInput).ShouldBe(246006621493687L);
+    }
+
+    [Fact]
     public void test_parse_sample_input_1()
     {
         // broadcaster -> a, b, c

@@ -1,5 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
-string SampleInput1 =
+string Input =
     """""
     broadcaster -> a, b, c
     %a -> b
@@ -7,5 +7,14 @@ string SampleInput1 =
     %c -> inv
     &inv -> a
     """"";
-ModuleNetwork network = ModuleNetwork.Parse(SampleInput1);
-network.PushButton();
+
+Input = File.ReadAllText("input.txt");
+ModuleNetwork network = ModuleNetwork.Parse(Input);
+foreach (Module m in network.Nodes.Values)
+{
+    foreach (string destination in network.OutEdges[m.Name])
+    {
+        
+        Console.WriteLine($"{m.Name} -> {destination}");
+    }
+}
