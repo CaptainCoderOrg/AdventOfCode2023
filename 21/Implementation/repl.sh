@@ -1,0 +1,1 @@
+csharprepl.exe -r "Implementation.csproj" -r "../../AoCHelpers/AoCHelpers.csproj"

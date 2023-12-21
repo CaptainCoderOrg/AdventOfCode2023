@@ -14,6 +14,23 @@ public class Day21
         return 0;
     }
 
+    public const string SampleInput =
+    """
+    ...........
+    .....###.#.
+    .###.##..#.
+    ..#.#...#..
+    ....#.#....
+    .##..S####.
+    .##..#...#.
+    .......##..
+    .##.#.####.
+    .##..##.##.
+    ...........
+    """;
+
+    public static readonly string PuzzleInput = File.ReadAllText("input.txt");
+
 }
 
 public enum Direction
@@ -42,17 +59,9 @@ public static class DirectionHelper
 
 public record Map(string[] Grid, int Rows, int Columns, Position Start)
 {
-    /// <summary>
-    /// Given a position, returns if we can move into that space
-    /// </summary>
-    public bool this[Position ix]
-    {
-        get
-        {
-            if (ix.Row < 0 || ix.Row >= Rows || ix.Col < 0 || ix.Col >= Columns) { return false; }
-            return Grid[ix.Row][ix.Col] != '#';
-        }
-    }
+    
+    public PositionInfo this[Position ix] => GridPositionInfo(ix);
+    public PositionInfo this[int row, int col] => this[(row, col)];
 
     public static Map Parse(string input)
     {
@@ -76,35 +85,95 @@ public record Map(string[] Grid, int Rows, int Columns, Position Start)
         return new Map(grid, rows, columns, start);
     }
 
-    public long FindValidPositions(Position startingPosition, int totalSteps)
+    /// <summary>
+    /// Given a global position, returns the subgrid position
+    /// </summary>
+    public PositionInfo GridPositionInfo(Position position)
     {
+        int row = ((position.Row % Rows) + Rows) % Rows;
+        int col = ((position.Col % Columns) + Columns) % Columns;
+        
+        int gridRow;
+        if (position.Row >= 0)
+        {
+            gridRow = position.Row / Rows;
+        }
+        else // (position.Row < 0)
+        {
+            gridRow = (position.Row - Rows + 1) / Rows;
+        }
+
+        int gridColumn;
+        if (position.Col >= 0)
+        {
+            gridColumn = position.Col / Columns;
+        }
+        else // (position.Row < 0)
+        {
+            gridColumn = (position.Col - Columns + 1) / Columns;
+        }
+        
+        return new PositionInfo(position, (gridRow, gridColumn), (row, col), this);
+    }
+
+    public void Traverse(Position start, int totalSteps, Predicate<Position> inBounds, Action<Position> onCount)
+    {
+        bool isEven = totalSteps % 2 == 0;
         Queue<(Position pos, int steps)> queue = new();
         queue.Enqueue((Start, 0));
-        HashSet<Position> visited = new() { startingPosition };
-        long count = 0;
+        HashSet<Position> visited = new() { start };
         while (queue.TryDequeue(out (Position pos, int steps) current))
         {
+            if (!inBounds(current.pos)) { continue; }
             if (current.steps > totalSteps) { continue; }
-            if (current.steps % 2 == 0)
+            if (current.steps % 2 == 0 && isEven)
             {
-                count++;
+                onCount(current.pos);
+            }
+            else if (!isEven)
+            {
+                onCount(current.pos);
             }
             foreach (Position neighbor in Neighbors(current.pos))
             {
                 // Not convinced this check is valid
                 if (visited.Contains(neighbor)) { continue; }
+                if (!inBounds(neighbor)) { continue; }
                 visited.Add(neighbor);
                 queue.Enqueue((neighbor, current.steps + 1));
             }
         }
+    }
 
+    public long FindValidPositions(Position startingPosition, int totalSteps) => FindValidPositions(startingPosition, totalSteps, (_) => true);
+
+    public long FindValidPositions(Position startingPosition, int totalSteps, Predicate<Position> inBounds)
+    {
+        long count = 0;
+        Traverse(startingPosition, totalSteps, inBounds, (_) => count++);
         return count;
     }
 
-    public bool IsValidPosition(Position position) => this[position];
+    public bool IsValidPosition(Position position)
+    {
+        int row = ((position.Row % Rows) + Rows) % Rows;
+        int col = ((position.Col % Columns) + Columns) % Columns;
+        return Grid[row][col] != '#';
+    }
 
     public IEnumerable<Position> Neighbors(Position position) =>
         DirectionHelper.Cardinals
                        .Select(dir => position.Step(dir))
-                       .Where(pos => this[pos]);
+                       .Where(pos => IsValidPosition(pos));
+}
+
+public record PositionInfo(Position RawPosition, Position GridPosition, Position PositionInGrid, Map Map)
+{
+    public override string ToString()
+    {
+        (int gridRow, int gridColumn) = GridPosition;
+        (int row, int col) = PositionInGrid;
+        (int r, int c) = RawPosition;
+        return $"({r},{c}) => Grid[{gridRow}, {gridColumn}][({row}, {col})]";
+    }
 }

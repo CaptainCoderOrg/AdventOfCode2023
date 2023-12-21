@@ -1,3 +1,5 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿// #r "21.sln"
+using AoCHelpers;
 
+Map sampleMap = Map.Parse(Day21.SampleInput);
+Map puzzleInput = Map.Parse(Day21.PuzzleInput);
