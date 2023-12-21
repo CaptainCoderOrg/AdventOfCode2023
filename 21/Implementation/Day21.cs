@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using AoCHelpers;
 
 public class Day21
@@ -54,12 +55,11 @@ public static class DirectionHelper
         _ => throw new Exception($"Invalid direction {direction}"),
     };
 
-
 }
 
 public record Map(string[] Grid, int Rows, int Columns, Position Start)
 {
-    
+
     public PositionInfo this[Position ix] => GridPositionInfo(ix);
     public PositionInfo this[int row, int col] => this[(row, col)];
 
@@ -92,7 +92,7 @@ public record Map(string[] Grid, int Rows, int Columns, Position Start)
     {
         int row = ((position.Row % Rows) + Rows) % Rows;
         int col = ((position.Col % Columns) + Columns) % Columns;
-        
+
         int gridRow;
         if (position.Row >= 0)
         {
@@ -112,9 +112,119 @@ public record Map(string[] Grid, int Rows, int Columns, Position Start)
         {
             gridColumn = (position.Col - Columns + 1) / Columns;
         }
-        
+
         return new PositionInfo(position, (gridRow, gridColumn), (row, col), this);
     }
+
+    public Predicate<Position> WithinRadius(int radius)
+    {
+        Position topLeft = (-(radius - 1) * Rows, -(radius - 1) * Columns);
+        Position bottomRight = (radius * Rows, radius * Columns);
+        return (position) => position.Row >= topLeft.Row && position.Row < bottomRight.Row && position.Col >= topLeft.Col && position.Col < bottomRight.Col;
+    }
+
+    public void MarkAndPrintPositions(Position start, int totalSteps, int radius)
+    {
+        HashSet<Position> Marked = MarkPositions(start, totalSteps, WithinRadius(radius));
+        PrintMarks(Marked, radius);
+    }
+
+    public void MarkAndPrintPositions(Position start, int totalSteps)
+    {
+        HashSet<Position> Marked = MarkPositions(start, totalSteps);
+        PrintMarks(Marked);
+    }
+
+    public HashSet<Position> MarkPositions(Position start, int totalSteps, int radius)
+    {
+        HashSet<Position> Marked = new();
+        Traverse(start, totalSteps, WithinRadius(radius), (p) => Marked.Add(p));
+        return Marked;
+    }
+
+    public HashSet<Position> MarkPositions(Position start, int totalSteps)
+    {
+        HashSet<Position> Marked = new();
+        Traverse(start, totalSteps, InOriginalGridBounds, (p) => Marked.Add(p));
+        return Marked;
+    }
+
+    public void PrintMarks(HashSet<Position> marked, int radius) => PrintMarks((-(radius - 1) * Rows, -(radius - 1) * Columns), (radius * Rows, radius * Columns), marked);
+
+    public HashSet<Position> MarkPositions(Position start, int totalSteps, Predicate<Position> InBounds)
+    {
+        HashSet<Position> Marked = new();
+        Traverse(start, totalSteps, InBounds, (p) => Marked.Add(p));
+        return Marked;
+    }
+
+    public void PrintMarks(HashSet<Position> positions) => PrintMarks((0, 0), (Rows, Columns), positions);
+
+    public string SubGridToString(int subRow, int subCol, HashSet<Position> positions)
+    {
+        Position topLeft = (subRow * Rows, subCol * Columns);
+        Position bottomRight = topLeft + (Rows, Columns);
+        return MarksToString(topLeft, bottomRight, positions);
+    }
+
+    public void PrintSubGrid(int subRow, int subCol, HashSet<Position> positions) => Console.WriteLine(SubGridToString(subRow, subCol, positions));
+
+    public void PrintMarks(Position topLeft, Position bottomRight, HashSet<Position> positions) => Console.WriteLine(MarksToString(topLeft, bottomRight, positions, true));
+
+    public string MarksToString(Position topLeft, Position bottomRight, HashSet<Position> positions, bool labels = false)
+    {
+        // (Position TopLeft, Position BottomRight) = Position.FindMinMax(positions);
+        // (Position TopLeft, Position BottomRight) = ((0, 0), (Rows, Columns)); //Position.FindMinMax(positions);
+        StringBuilder builder = new StringBuilder();
+        (int gridRow, int gridColumnStart) = GridPositionInfo(topLeft).GridPosition;
+        for (int row = topLeft.Row; row < bottomRight.Row; row++)
+        {
+            if ((((row % Rows) + Rows) % Rows) == 0)
+            {
+                if (labels)
+                {
+                    int gridColumn = gridColumnStart;
+                    for (int col = topLeft.Col; col < bottomRight.Col; col++)
+                    {
+                        string label = $" ({gridRow}, {gridColumn}) ";
+                        if (((col % Columns) + Columns) % Columns == 0)
+                        {
+                            builder.Append(label);
+                            col += label.Length-1;
+                            gridColumn++;
+                        }
+                        builder.Append(' ');
+                    }
+                    gridRow++;
+                }
+                builder.AppendLine();
+            }
+
+            for (int col = topLeft.Col; col < bottomRight.Col; col++)
+            {
+                if (((col % Columns) + Columns) % Columns == 0)
+                {
+                    builder.Append(' ');
+                }
+                if (positions.Contains(new Position(row, col)))
+                {
+                    builder.Append('O');
+                }
+                else if (IsValidPosition((row, col)))
+                {
+                    builder.Append('.');
+                }
+                else
+                {
+                    builder.Append('#');
+                }
+            }
+            builder.AppendLine();
+        }
+        return builder.ToString();
+    }
+
+    public bool InOriginalGridBounds(Position position) => position.Row >= 0 && position.Row < Rows && position.Col >= 0 && position.Col < Columns;
 
     public void Traverse(Position start, int totalSteps, Predicate<Position> inBounds, Action<Position> onCount)
     {
