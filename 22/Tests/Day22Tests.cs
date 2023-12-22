@@ -27,7 +27,20 @@ public class Day22Tests
     [Fact]
     public void test_puzzle_input_part1()
     {
-        Day22.Part1(PuzzleInput).ShouldBe(5);
+        Day22.Part1(PuzzleInput).ShouldBe(448L);
+    }
+
+    [Fact]
+    public void test_supporting()
+    {
+        Tower tower = Tower.BuildTower(Brick.ParseAll(SampleInput));
+        HashSet<Brick> supporting = tower.Supporting(new Brick((1, 0, 1), (1, 2, 1)));
+        supporting.Count.ShouldBe(2);
+        supporting.ShouldBeSubsetOf([
+            new Brick((0, 0, 2), (2, 0, 2)),
+            new Brick((0, 2, 2), (2, 2, 2)),
+        ]);
+
     }
 
     [Fact]

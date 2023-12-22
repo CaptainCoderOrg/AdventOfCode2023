@@ -1,14 +1,8 @@
 using System.Diagnostics;
-using AoCHelpers;
-using CaptainCoder.MathUtils;
 
 public class Day22
 {
-    public static long Part1(string input)
-    {
-        (List<Brick> bricks, Dictionary<int, HashSet<Position3D>> tower) = Tower.Fall([..Brick.ParseAll(input)]);
-        return Tower.CheckDisintegrate(bricks, tower);
-    }
+    public static long Part1(string input) => Tower.BuildTower(Brick.ParseAll(input)).Removeable().Count();
 
     public static long Part2(string input)
     {
@@ -16,10 +10,10 @@ public class Day22
     }
 }
 
+[DebuggerDisplay("({X}, {Y}, {Z})")]
 public record struct Position3D(int X, int Y, int Z)
 {
     public static implicit operator Position3D((int x, int y, int z) tuple) => new(tuple.x, tuple.y, tuple.z);
-
     public Position3D Drop(int n) => (X, Y, Z - n);
     public Position3D Lift(int n) => (X, Y, Z + n);
 
@@ -41,9 +35,7 @@ public record struct Position3D(int X, int Y, int Z)
 [DebuggerDisplay("{Lower.X}, {Lower.Y}, {Lower.Z} ~ {Upper.X}, {Upper.Y}, {Upper.Z}")]
 public record Brick(Position3D Lower, Position3D Upper) : IComparable<Brick>
 {
-    // Terribly inefficient
-    public HashSet<Position3D> Occupied() => [.. Position3D.Occupied(Lower, Upper)]; //_occupied;
-    // private HashSet<Position3D> _occupied = [.. Position3D.Occupied(Lower, Upper)];
+    public HashSet<Position3D> Occupied() => Position3D.Occupied(Lower, Upper).ToHashSet();
     public Brick Drop(int n) => new Brick(Lower.Drop(n), Upper.Drop(n));
     public Brick Lift(int n) => new Brick(Lower.Lift(n), Upper.Lift(n));
     public static IEnumerable<Brick> ParseAll(string input) =>
@@ -60,79 +52,109 @@ public record Brick(Position3D Lower, Position3D Upper) : IComparable<Brick>
 
 public class Tower
 {
-    public static int CheckDisintegrate(List<Brick> bricks, Dictionary<int, HashSet<Position3D>> tower)
+
+    private Dictionary<Brick, HashSet<Brick>> _supports = new ();
+    private Dictionary<Brick, HashSet<Brick>> _supporting = new ();
+    private Dictionary<Position3D, Brick> _positionToBrick = new ();
+    private List<Brick> _bricks = new ();
+    public IEnumerable<Brick> Bricks => [.._bricks];
+
+    public static Tower BuildTower(IEnumerable<Brick> bricks)
     {
-        bool IsStableWithBrickRemoved(Brick toCheck, Brick removed)
+        Tower tower = new ();
+        IEnumerable<Brick> sorted = bricks.Order();
+
+        foreach (Brick brick in sorted)
         {
-            
-            Brick ifMoved = toCheck.Drop(1);
-            if (ifMoved.Lower.Z <= 0) { return true; }
-            foreach (Position3D pos in ifMoved.Occupied())
-            {
-                HashSet<Position3D> inZPosition = tower.GetValueOrDefault(pos.Z, []).ToHashSet();
-                inZPosition.ExceptWith(removed.Occupied());
-                if (inZPosition.Contains(pos)) { return true; }
-            }
-            return false;
+            Brick dropped = tower.SimulateDrop(brick);
+            tower.Add(dropped);
         }
-        string labels = string.Join("", Enumerable.Range((int)'A', bricks.Count).Select(x => (char)x));
-        HashSet<Brick> removable = [.. bricks];
-        foreach (Brick toCheck in bricks)
-        {
-            foreach (Brick toRemove in bricks)
-            {
-                if (toCheck == toRemove) { continue; }
-                if (!IsStableWithBrickRemoved(toCheck, toRemove))
-                {
-                    removable.Remove(toRemove);
-                }
-            }
-        }
-        return removable.Count;
+        return tower;
     }
 
-    public static (List<Brick> bricks, Dictionary<int, HashSet<Position3D>> tower) Fall(List<Brick> bricks)
+    public IEnumerable<Brick> Removeable()
     {
-        bricks = [.. bricks.Order()];
-        List<Brick> newBricks = new();
-        // Given a z index, which positions are occupied there
-        Dictionary<int, HashSet<Position3D>> occupied = new();
-
-        // Because the bricks are sorted, we know we are moving the bottom
-        // most brick
-        foreach (Brick brick in bricks)
+        // A brick can be safely removed IF the it does not support any bricks
+        // OR if ALL of the bricks that it supports have at least 2 supporting bricks
+        foreach (Brick brick in _bricks)
         {
-            Brick falling = brick;
-            while (falling.Lower.Z > 0 && !CollidesAt(falling.Lower.Z, falling)) // While brick can fall
+            HashSet<Brick> supporting = Supporting(brick);
+            if (supporting.Count == 0 || supporting.All(other => Supports(other).Count >= 2))
             {
-                falling = falling.Drop(1);
+                yield return brick;
             }
-            falling = falling.Drop(-1);
-            SetBrick(falling);
-            // Set Block in occupied
-            newBricks.Add(falling);
-        }
-
-        return (newBricks, occupied);
-
-        void SetBrick(Brick toSet)
-        {
-            foreach (Position3D position in toSet.Occupied())
-            {
-                if (!occupied.TryGetValue(position.Z, out HashSet<Position3D>? inZ))
-                {
-                    inZ = new HashSet<Position3D>();
-                    occupied[position.Z] = inZ;
-                }
-                inZ.Add(position);
-            }
-        }
-
-        bool CollidesAt(int z, Brick toCheck)
-        {
-            HashSet<Position3D> positionsAtHeight = occupied.GetValueOrDefault(z, []);
-            return toCheck.Occupied().Intersect(positionsAtHeight).Any();
         }
     }
+
+    public void Add(Brick toAdd)
+    {
+        HashSet<Position3D> newPositions = toAdd.Occupied();
+        foreach (Position3D position in newPositions)
+        {
+            _positionToBrick[position] = toAdd;
+        }
+        _bricks.Add(toAdd);
+    }
+
+    public Brick SimulateDrop(Brick toDrop)
+    {
+        Brick dropped = toDrop.Drop(1);
+        foreach (Position3D below in dropped.Occupied())
+        {
+            // If any position below is occupied, we can't drop
+            if (IsOccupied(below))
+            {
+                return toDrop;
+            }
+        }
+        // Otherwise we keep dropping
+        return SimulateDrop(dropped);
+    }
+
+    /// <summary>
+    /// Given a brick, which bricks support it?
+    /// </summary>
+    public HashSet<Brick> Supports(Brick brick)
+    {
+        if (!_supports.TryGetValue(brick, out HashSet<Brick>? supports))
+        {
+            supports = new ();
+            foreach(Position3D below in brick.Drop(1).Occupied())
+            {
+                if (!_positionToBrick.ContainsKey(below)) { continue; }
+                Brick other = _positionToBrick[below];
+                if (other == brick) { continue; }
+                supports.Add(other);
+            }
+            _supports[brick] = supports;
+        }
+        return supports;
+    }
+
+    /// <summary>
+    /// Given a brick, which bricks does it support?
+    /// </summary>
+    public HashSet<Brick> Supporting(Brick brick)
+    {
+        if (!_supporting.TryGetValue(brick, out HashSet<Brick>? supporting))
+        {
+            supporting = new ();
+            var aboves = brick.Lift(1).Occupied();
+            foreach(Position3D above in aboves) //brick.Lift(1).Occupied())
+            {
+                if (!_positionToBrick.ContainsKey(above)) { continue; }
+                Brick other = _positionToBrick[above];
+                if (other == brick) { continue; }
+                supporting.Add(other);
+            }
+            _supporting[brick] = supporting;
+        }
+        return supporting;
+    }
+
+    /// <summary>
+    /// A position is occupied if there is a block there OR if the position is under ground.
+    /// </summary>
+    public bool IsOccupied(Position3D position) => position.Z <= 0 || _positionToBrick.ContainsKey(position);
 
 }
