@@ -10,6 +10,19 @@ public class Day23Tests
     {
         Day23.Part1(Day23.SampleInput).ShouldBe(94);
     }
+    
+    [Fact]
+    public void test_sample_input_part2()
+    {
+        Day23.Part2(Day23.SampleInput).ShouldBe(154);
+    } 
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day23.Part2(Day23.PuzzleInput).ShouldBe(6502L);
+    }
+
     [Fact]
     public void test_puzzle_input_part1()
     {

@@ -39,7 +39,8 @@ public class Day23
 
     public static long Part2(string input)
     {
-        return 0;
+        input = input.Replace('>', '.').Replace('<', '.').Replace('^', '.').Replace('v', '.');
+        return Part1(input);
     }
 }
 
