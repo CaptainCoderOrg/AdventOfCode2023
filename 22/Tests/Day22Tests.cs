@@ -25,10 +25,30 @@ public class Day22Tests
     }
 
     [Fact]
+    public void test_sample_input_part2()
+    {
+        Day22.Part2(SampleInput).ShouldBe(7);
+    }
+
+    [Fact]
     public void test_puzzle_input_part1()
     {
         Day22.Part1(PuzzleInput).ShouldBe(448L);
     }
+
+    [Fact]
+    public void test_puzzle_input_part2()
+    {
+        Day22.Part2(PuzzleInput).ShouldBe(57770L);
+    }
+
+    [Fact]
+    public void test_simulate_removal()
+    {
+        Tower tower = Tower.BuildTower(Brick.ParseAll(SampleInput));
+        tower.SimulateRemoval(new Brick((1, 0, 1), (1, 2, 1))).ShouldBe(6);
+    }
+
 
     [Fact]
     public void test_supporting()

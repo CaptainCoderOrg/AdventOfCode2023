@@ -6,7 +6,9 @@ public class Day22
 
     public static long Part2(string input)
     {
-        return 0;
+        Tower tower = Tower.BuildTower(Brick.ParseAll(input));
+        HashSet<Brick> removeable = [..tower.Removeable()];
+        return tower.Bricks.Where(b => !removeable.Contains(b)).Select(tower.SimulateRemoval).Sum();;
     }
 }
 
@@ -57,6 +59,7 @@ public class Tower
     private Dictionary<Brick, HashSet<Brick>> _supporting = new ();
     private Dictionary<Position3D, Brick> _positionToBrick = new ();
     private List<Brick> _bricks = new ();
+    private int _drops = 0;
     public IEnumerable<Brick> Bricks => [.._bricks];
 
     public static Tower BuildTower(IEnumerable<Brick> bricks)
@@ -67,9 +70,20 @@ public class Tower
         foreach (Brick brick in sorted)
         {
             Brick dropped = tower.SimulateDrop(brick);
+            // During construction, if we dropped this brick count it
+            if (brick != dropped) { tower._drops++; }
             tower.Add(dropped);
         }
         return tower;
+    }
+
+    public long SimulateRemoval(Brick toRemove)
+    {
+        HashSet<Brick> copy = _bricks.ToHashSet();
+        copy.Remove(toRemove);
+         // Build a new tower with the remaining bricks
+        Tower newTower = BuildTower(copy);
+        return newTower._drops;
     }
 
     public IEnumerable<Brick> Removeable()
