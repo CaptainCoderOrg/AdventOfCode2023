@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace AoCHelpers;
 /// <summary>
 /// A discrete readonly position defined by a row and column. For convenience,
@@ -5,8 +7,19 @@ namespace AoCHelpers;
 /// cref="MutablePosition"/> struct.
 /// </summary>
 [Serializable]
+[DebuggerDisplay("({Row}, {Col})")]
 public readonly record struct Position(int Row, int Col)
 {
+    public static IEnumerable<Position> Iterate(Position TopLeft, Position BottomRight)
+    {
+        for (int row = TopLeft.Row; row <= BottomRight.Row; row++)
+        {
+            for (int col = TopLeft.Col; col <= BottomRight.Col; col++)
+            {
+                yield return (row, col);
+            }
+        }
+    }
     /// <summary>
     /// Allows (int, int) tuples to be used anywhere a Position can be used. Be careful not to 
     /// do this when using a position as a key in a HashSet or Dictionary.

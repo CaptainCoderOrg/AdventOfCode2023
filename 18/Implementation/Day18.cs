@@ -15,24 +15,17 @@ public partial class Day18
     public static long Part2(string input)
     {
         Polygon outline = Polygon.Parse(input);
-        
         // Pick's theorem ( https://en.wikipedia.org/wiki/Pick%27s_theorem )
-        // Area = Interior + Boundary/2 - 1 .
         long area = Shoelace(outline.Positions);
         long totalArea = area + outline.Perimeter / 2 + 1;
         return totalArea;
     }
 
-    public static long Shoelace(List<Position> vertices)
+    public static long Shoelace(IEnumerable<Position> vertices)
     {
-        long sum = 0L;
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            Position p1 = vertices[i];
-            Position p2 = vertices[(i + 1) % vertices.Count];
-            sum += ((long)p2.Col + p1.Col) * ((long)p2.Row - p1.Row);
-        }
-        return sum / 2;
+        return vertices.Zip([.. vertices.Skip(1), vertices.First()])
+                .Select(((Position First, Position Second) points) => ((long)points.Second.Col + points.First.Col) * ((long)points.Second.Row - points.First.Row))
+                .Sum() / 2;
     }
 
 
@@ -44,7 +37,7 @@ public enum GridState
     NoHole,
 }
 
-public record Polygon(List<Position> Positions, long Perimeter)
+public record Polygon(IEnumerable<Position> Positions, long Perimeter)
 {
     public static Polygon Parse(string input)
     {

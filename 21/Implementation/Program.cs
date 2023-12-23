@@ -1,5 +1,4 @@
 ﻿// #r "21.sln"
-using System.Security.Cryptography;
 using AoCHelpers;
 
 // Map map = Map.Parse(Day21.SampleInput);
@@ -12,7 +11,7 @@ long elfSteps = 26_501_365;
 long elfRadius = (elfSteps - (map.Rows / 2)) / map.Rows;
 Console.WriteLine($"Elf Radius: {elfRadius}");
 
-//          
+//          v  v  v  v  v   v
 // Radius   4  6  8  10 12  14
 // 0 [919]. 3, 5, 7, 9, 11, 13 Occurrences
 //          4  6  8  10 12  14
@@ -20,7 +19,7 @@ Console.WriteLine($"Elf Radius: {elfRadius}");
 //          4  6  8  10 12  14
 // 9 [940]. 3, 5, 7, 9, 11, 13
 //           4  6  8  10 12  14
-// 12 [933]. 3, 5, 7, 9, 11, 13
+// 12 [933]. 3, 5, 7, 9, 11, 13`
 long sum = 0;
 
 sum += 919 * (elfRadius - 1 );

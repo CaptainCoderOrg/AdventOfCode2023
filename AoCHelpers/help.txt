@@ -1,0 +1,57 @@
+[0m[0m[0;96;1mC# REPL 0.6.6+ba21d409af4dce77f8be07f6a61cdb24cd19bb29[0m[0m
+[0m[0;4mUsage[0m[0m: [0m[0;96mcsharprepl[0m[0m [0m[0;32m[OPTIONS][0m[0m [0m[0;36m[@response-file.rsp][0m[0m [0m[0;36m[script-file.csx][0m[0m [0m[0;32m[-- <additional-arguments>][0m[0m
+
+Starts a REPL (read eval print loop) according to the provided [0m[0;32m[OPTIONS][0m[0m.
+These [0m[0;32m[OPTIONS][0m[0m can be provided at the command line, or via a [0m[0;36m[@response-file.rsp][0m[0m.
+A [0m[0;36m[script-file.csx][0m[0m, if provided, will be executed before the prompt starts.
+
+[0m[0;4mOPTIONS[0m[0m:
+  [0m[0;32m-r[0m[0m [0m[0;36m<dll>[0m[0m or [0m[0;32m--reference[0m[0m [0m[0;36m<dll>[0m[0m:              Reference assemblies, nuget packages, and csproj files. Can be specified multiple times.
+  [0m[0;32m-u[0m[0m [0m[0;36m<namespace>[0m[0m or [0m[0;32m--using[0m[0m [0m[0;36m<namespace>[0m[0m:      Add using statement. Can be specified multiple times.
+  [0m[0;32m-f[0m[0m [0m[0;36m<framework>[0m[0m or [0m[0;32m--framework[0m[0m [0m[0;36m<framework>[0m[0m:  Reference a shared framework.
+                                              Available shared frameworks: 
+                                               - [0m[0;36mMicrosoft.AspNetCore.App[0m[0m
+                                               - [0m[0;36mMicrosoft.NETCore.App[0m[0m [0m[0;90m(default)[0m[0m
+                                               - [0m[0;36mMicrosoft.WindowsDesktop.App[0m[0m
+  [0m[0;32m-t[0m[0m [0m[0;36m<theme.json>[0m[0m or [0m[0;32m--theme[0m[0m [0m[0;36m<theme.json>[0m[0m:    Read a theme file for syntax highlighting. Respects the NO_COLOR standard.
+                                              Available default themes: 
+                                               - [0m[0;36mthemes\dracula.json[0m[0m
+                                               - [0m[0;36mthemes\VisualStudio_BlueExtraContrast.json[0m[0m
+                                               - [0m[0;36mthemes\VisualStudio_Dark.json[0m[0m [0m[0;90m(default)[0m[0m
+                                               - [0m[0;36mthemes\VisualStudio_Light.json[0m[0m
+  [0m[0;32m--useTerminalPaletteTheme[0m[0m:                  Uses terminal palette colors for syntax highlighting. Respects the NO_COLOR standard.
+  [0m[0;32m--prompt[0m[0m:                                   Formatted prompt string.
+  [0m[0;32m--useUnicode[0m[0m:                               Use UTF8 output encoding and unicode character decorations (requires terminal support).
+  [0m[0;32m--usePrereleaseNugets[0m[0m:                      Allows prerelease NuGet versions when searching for the latest package version.
+  [0m[0;32m--streamPipedInput[0m[0m:                         If input is piped via stdin, evaluate it line by line instead of in one batch.
+  [0m[0;32m--tabSize[0m[0m [0m[0;36m<width>[0m[0m:                          Width of tab character.
+  [0m[0;32m--culture[0m[0m [0m[0;36m<culture name>[0m[0m:                   Culture to use for access to the MSDN documentation. Defaults to the current culture.
+
+  Key Bindings
+  [0m[0;32m--triggerCompletionListKeys[0m[0m [0m[0;36m<key-binding>[0m[0m:  Key binding to trigger the completion list. Can be specified multiple times.
+  [0m[0;32m--newLineKeys[0m[0m [0m[0;36m<key-binding>[0m[0m:                Key binding to insert a newline character. Can be specified multiple times.
+  [0m[0;32m--submitPromptKeys[0m[0m [0m[0;36m<key-binding>[0m[0m:           Key binding to submit the prompt. Can be specified multiple times.
+  [0m[0;32m--submitPromptDetailedKeys[0m[0m [0m[0;36m<key-binding>[0m[0m:   Key binding to submit the prompt with detailed output. Can be specified multiple times.
+
+  Open AI
+  [0m[0;32m--openAIApiKey[0m[0m:                             OpenAI API key. Alternatively, set the OPENAI_API_KEY environment variable.
+  [0m[0;32m--openAIPrompt[0m[0m:                             OpenAI prompt to prefix to all code submissions
+  [0m[0;32m--openAIModel[0m[0m:                              OpenAI model configuration
+  [0m[0;32m--openAITemperature[0m[0m:                        OpenAI temperature configuration
+  [0m[0;32m--openAITopProbability[0m[0m:                     OpenAI top_p configuration
+  [0m[0;32m--openAIHistoryCount[0m[0m:                       Maximum number of previous REPL entries to send to OpenAI as context.
+
+  Help and Diagnostics
+  [0m[0;32m--trace[0m[0m:                                    Produce a trace file in the current directory, for CSharpRepl bug reports.
+  [0m[0;32m-v[0m[0m or [0m[0;32m--version[0m[0m:                            Show version number and exit.
+  [0m[0;32m-h[0m[0m or [0m[0;32m--help[0m[0m:                               Show this help and exit.
+
+[0m[0;36m@response-file.rsp[0m[0m:
+  A file, with extension .rsp, containing the above command line [0m[0;32m[OPTIONS][0m[0m, one option per line.
+  Command line options will also be loaded from C:\Users\josep\AppData\Roaming\.csharprepl\config.rsp
+  Run 'csharprepl --configure' to launch this file in your editor.
+
+[0m[0;36mscript-file.csx[0m[0m:
+  A file, with extension .csx, containing lines of C# to evaluate before starting the REPL.
+  Arguments to this script can be passed as [0m[0;32m<additional-arguments>[0m[0m and will be available in a global `args` variable.
+[0m
