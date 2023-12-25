@@ -1,2 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿
+long count = Day24.Part1(Day24.SampleInput, 7, 27);
+
+Console.WriteLine($"Count: {count}");
