@@ -1,2 +1,3 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿string input = File.ReadAllText("input.txt");
+Graph g = Graph.Parse(input);
+Console.WriteLine(g.ToDot());
